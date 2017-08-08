@@ -10,7 +10,7 @@
     "test": "npm run lint",
     "precommit": "npm test",
     "docs": "apidoc -e node_modules/ -o public/",
-    "postinstall": "npm run docs"
+    "postinstall": "mkdir public && npm run docs"
   },
   "repository": {
     "type": "git",
