@@ -4,11 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "lint": "run-p lint:*",
-    "lint:html": "htmlhint ./**/*.html",
-    "lint:css": "stylelint ./**/*.css",
     "lint:js": "eslint ./**/*.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run lint",
+    "precommit": "npm test",
+    "docs": "apidoc -e node_modules/ -o public/",
+    "postinstall": "npm run docs"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,7 @@
   },
   "homepage": "https://github.com/alvinscheng/mission-IM-possible-api#readme",
   "devDependencies": {
+    "apidoc": "^0.17.6",
     "eslint": "3.19.0",
     "eslint-config-standard": "10.2.1",
     "eslint-plugin-import": "2.3.0",
@@ -29,11 +32,9 @@
     "eslint-plugin-promise": "3.5.0",
     "eslint-plugin-react": "7.0.1",
     "eslint-plugin-standard": "3.0.1",
-    "htmlhint": "0.9.13",
     "husky": "0.13.4",
     "npm-run-all": "4.0.2",
-    "stylelint": "7.10.1",
-    "stylelint-config-standard": "16.0.0"
+    "stylelint": "7.10.1"
   },
   "dependencies": {
     "dotenv": "^4.0.0",
