@@ -5,8 +5,8 @@ const knex = require('knex')({
 
 function findUser(username) {
   return knex('users')
-    .count('*')
     .where('username', username)
+    .limit(1)
 }
 
 function addUser(username, password) {
