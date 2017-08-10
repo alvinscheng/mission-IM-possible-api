@@ -23,6 +23,22 @@ io.on('connection', socket => {
   })
 })
 
+/**
+ * @api {post} /register Create a new user.
+ * @apiGroup register
+ *
+ * @apiExample {httpie} Example Usage:
+ *  http post http://localhost/register username=user1 password=password1
+ *
+ *
+ * @apiSuccessExample {json} Successful Response:
+ *  HTTP/1.1 201 CREATED
+ *  {
+ *    "token": "YOUR_TOKEN"
+ *  }
+ *
+ */
+
 app.post('/register', (req, res) => {
   const { username, password } = req.body
   const payload = { username }
