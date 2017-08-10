@@ -4,6 +4,7 @@ const path = require('path')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const { findUser, addUser } = require('./knex.js')
 
 const app = express()
 const server = require('http').createServer(app)
@@ -21,14 +22,20 @@ io.on('connection', socket => {
 })
 
 app.post('/register', (req, res) => {
-  let { username, password } = req.body
+  const { username, password } = req.body
   const payload = { username }
   const token = jwt.sign(payload, process.env.JWT_SECRET)
-  bcrypt.hash(password, 10).then(hash => {
-    password = hash
-    // use knex to send user to datapase and return token
-    console.log(token)
-  })
+  const salt = bcrypt.genSaltSync(10)
+  const hash = bcrypt.hashSync(password, salt)
+  findUser(username)
+    .then(data => {
+      (data)
+        ? console.log('user already exists')
+        : addUser(username, hash)
+            .then(() => {
+              res.send({ token })
+            })
+    })
 })
 
 const port = process.env.PORT || 3000
