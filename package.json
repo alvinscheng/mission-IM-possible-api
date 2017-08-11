@@ -7,6 +7,7 @@
     "start": "node .",
     "lint": "run-p lint:*",
     "lint:js": "eslint ./**/*.js",
+    "pretest": "npm run db:rebuild",
     "test": "npm run lint",
     "db:make": "pg-bump create",
     "db:up": "pg-bump up",
