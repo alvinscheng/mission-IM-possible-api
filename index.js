@@ -52,7 +52,7 @@ app.post('/register', (req, res) => {
       else {
         addUser(username, hash)
           .then(() => {
-            res.status(201).send({ token })
+            res.status(201).send({ username, token })
           })
       }
     })
