@@ -30,7 +30,6 @@ io.on('connection', socket => {
  * @apiExample {httpie} Example Usage:
  *  http post http://localhost/register username=user1 password=password1
  *
- *
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 201 CREATED
  *  {
