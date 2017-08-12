@@ -57,5 +57,23 @@ app.post('/register', (req, res) => {
     })
 })
 
+app.post('/authenticate', (req, res) => {
+  const { username, password } = req.body
+  findUser(username)
+    .then(user => {
+      if (!user.length) {
+        res.status(404).send('Username does not exist')
+      }
+      else {
+        if (bcrypt.compareSync(password, user.password)) {
+          return user
+        }
+        else {
+          res.status(401).send('Passwords did not match.')
+        }
+      }
+    })
+})
+
 const port = process.env.PORT || 3000
 server.listen(port, () => console.log('Listening on ' + port))
