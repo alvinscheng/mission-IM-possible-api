@@ -65,8 +65,8 @@ app.post('/authenticate', (req, res) => {
         res.status(404).send('Username does not exist')
       }
       else {
-        if (bcrypt.compareSync(password, user.password)) {
-          return user
+        if (bcrypt.compareSync(password, user[0].password)) {
+          console.log('Logged in!')
         }
         else {
           res.status(401).send('Passwords did not match.')
