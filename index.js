@@ -25,7 +25,8 @@ io.on('connection', socket => {
 
 /**
  * @api {post} /register Create a new user.
- * @apiGroup register
+ * @apiName CreateUser
+ * @apiGroup Login
  *
  * @apiExample {httpie} Example Usage:
  *  http post http://localhost/register username=user1 password=password1
@@ -37,7 +38,6 @@ io.on('connection', socket => {
  *  }
  *
  */
-
 app.post('/register', (req, res) => {
   const { username, password } = req.body
   const payload = { username }
@@ -57,19 +57,47 @@ app.post('/register', (req, res) => {
     })
 })
 
+/**
+ * @api {post} /authenticate Verify the user password.
+ * @apiName AuthenticatePassword
+ * @apiGroup Login
+ *
+ * @apiExample {httpie} Example Usage:
+ *  http post http://localhost/authenticate username=user1 password=password1
+ *
+ * @apiSuccessExample {json} Successful Response:
+ *  HTTP/1.1 201 CREATED
+ *  {
+ *    "token": "YOUR_TOKEN"
+ *    "username": "user1"
+ *  }
+ *
+ * @apiErrorExample {json} Error-Response:
+ *  HTTP/1.1 401 Unauthorized
+ *  {
+ *    "error": "Passwords did not match."
+ *  }
+ *
+ * @apiErrorExample {json} Error-Response:
+ *  HTTP/1.1 404 Not Found
+ *  {
+ *    "error": "Username does not exist."
+ *  }
+ *
+ */
 app.post('/authenticate', (req, res) => {
   const { username, password } = req.body
   findUser(username)
     .then(user => {
       if (!user.length) {
-        res.status(404).send('Username does not exist')
+        res.status(404).send({ error: 'Username does not exist' })
       }
       else {
         if (bcrypt.compareSync(password, user[0].password)) {
           console.log('Logged in!')
         }
         else {
-          res.status(401).send('Passwords did not match.')
+          res.status(401).send({ error: 'Passwords did not match.' })
         }
       }
     })
