@@ -68,6 +68,9 @@ app.post('/register', (req, res) => {
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 201 CREATED
  *  {
+
+UPDATE THIS
+
  *    "token": "YOUR_TOKEN"
  *    "username": "user1"
  *  }
@@ -89,17 +92,15 @@ app.post('/authenticate', (req, res) => {
   const { username, password } = req.body
   findUser(username)
     .then(user => {
-      if (!user.length) {
-        res.status(404).send({ error: 'Username does not exist' })
+      if (!user.length) return res.status(404).send({ error: 'Username does not exist' })
+
+      if (!bcrypt.compareSync(password, user[0].password)) {
+        return res.status(401).send({ error: 'Passwords did not match.' })
       }
-      else {
-        if (bcrypt.compareSync(password, user[0].password)) {
-          console.log('Logged in!')
-        }
-        else {
-          res.status(401).send({ error: 'Passwords did not match.' })
-        }
-      }
+
+      const payload = { username }
+      const token = jwt.sign(payload, process.env.JWT_SECRET)
+      res.status(200).send({ username, token })
     })
 })
 
