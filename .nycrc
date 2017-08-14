@@ -1,0 +1,18 @@
+{
+  "check-coverage": true,
+  "include": [
+    "**/*.js"
+  ],
+  "exclude": [
+    "coverage/",
+    "node_modules/",
+    "test/"
+  ],
+  "reporter": [
+    "lcov",
+    "text-summary"
+  ],
+  "require": [
+    "babel-register"
+  ]
+}
