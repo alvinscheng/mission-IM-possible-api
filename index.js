@@ -52,7 +52,7 @@ app.post('/register', (req, res) => {
   findUser(username)
     .then(data => {
       if (data.length) {
-        res.status(409).send('Username already exists')
+        res.status(409).send('Username already exists.')
       }
       else {
         addUser(username, hash)
@@ -98,7 +98,7 @@ app.post('/authenticate', (req, res) => {
   const { username, password } = req.body
   findUser(username)
     .then(user => {
-      if (!user.length) return res.status(404).send({ error: 'Username does not exist' })
+      if (!user.length) return res.status(404).send({ error: 'Username does not exist.' })
 
       if (!bcrypt.compareSync(password, user[0].password)) {
         return res.status(401).send({ error: 'Passwords did not match.' })
@@ -112,3 +112,5 @@ app.post('/authenticate', (req, res) => {
 
 const port = process.env.PORT || 3000
 server.listen(port, () => console.log('Listening on ' + port))
+
+module.exports = server
