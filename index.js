@@ -6,6 +6,7 @@ const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const { findUser, addUser } = require('./knex.js')
+const socketioJwt = require('socketio-jwt')
 
 const app = express()
 const server = require('http').createServer(app)
@@ -16,6 +17,11 @@ const io = require('socket.io')(server, {
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(bodyParser.json())
 app.options('*', cors())
+
+io.use(socketioJwt.authorize({
+  secret: process.env.JWT_SECRET,
+  handshake: true
+}))
 
 io.on('connection', socket => {
   socket.on('chat-message', msg => {
