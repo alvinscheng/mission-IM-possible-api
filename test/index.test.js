@@ -75,7 +75,7 @@ describe('Socket.io', () => {
   it('broadcasts a message to all users', done => {
     let messages = 0
 
-    function checkMessage(user) {
+    function checkMessages(user) {
       user.on('chat-message', msg => {
         expect(msg).to.equal('Hello World!')
         user.disconnect()
@@ -88,16 +88,17 @@ describe('Socket.io', () => {
     const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
       path: '/api/connect'
     })
-    checkMessage(user1)
+    checkMessages(user1)
     user1.on('connect', () => {
       const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
         path: '/api/connect'
       })
-      checkMessage(user2)
+      checkMessages(user2)
       user2.on('connect', () => {
         user1.emit('chat-message', 'Hello World!')
       })
     })
+    done()
   })
 
 })
