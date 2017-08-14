@@ -5,6 +5,7 @@ const knex = require('knex')({
   dialect: 'pg',
   connection: process.env.DATABASE_URL
 })
+const io = require('socket.io-client')
 
 describe('mission-IM-possible API', () => {
 
@@ -63,6 +64,38 @@ describe('mission-IM-possible API', () => {
         expect(res).to.have.property('statusCode', 401)
         expect(body.error).to.equal('Passwords did not match.')
         done()
+      })
+    })
+  })
+
+})
+
+describe('Socket.io', () => {
+
+  it('broadcasts a message to all users', done => {
+    let messages = 0
+
+    function checkMessage(user) {
+      user.on('chat-message', msg => {
+        expect(msg).to.equal('Hello World!')
+        user.disconnect()
+        messages++
+        if (messages === 2) {
+          done()
+        }
+      })
+    }
+    const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+      path: '/api/connect'
+    })
+    checkMessage(user1)
+    user1.on('connect', () => {
+      const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+        path: '/api/connect'
+      })
+      checkMessage(user2)
+      user2.on('connect', () => {
+        user1.emit('chat-message', 'Hello World!')
       })
     })
   })
