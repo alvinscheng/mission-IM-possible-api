@@ -27,6 +27,9 @@ io.on('connection', socket => {
   socket.on('chat-message', msg => {
     io.emit('chat-message', msg)
   })
+  socket.on('new-user-login', username => {
+    io.emit('new-user-login', username)
+  })
 })
 
 /**
