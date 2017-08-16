@@ -24,7 +24,11 @@ io.use(socketioJwt.authorize({
 }))
 
 io.on('connection', socket => {
-  io.emit('new-user-login', socket.handshake.query.username)
+  const users = []
+  for (const prop in io.sockets.connected) {
+    users.push(io.sockets.connected[prop].decoded_token.username)
+  }
+  io.emit('new-user-login', users)
   socket.on('chat-message', msg => {
     io.emit('chat-message', msg)
   })
@@ -56,7 +60,7 @@ app.post('/register', (req, res) => {
   findUser(username)
     .then(data => {
       if (data.length) {
-        res.status(409).send('Username already exists.')
+        res.status(409).send({ error: 'Username already exists.' })
       }
       else {
         addUser(username, hash)

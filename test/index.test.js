@@ -178,6 +178,7 @@ describe('Socket.io', () => {
     it('broadcasts when a socket connects', done => {
 
       user2.disconnect()
+
       user2 = io('http://localhost:' + port, {
         path: '/api/connect',
         'query': {
@@ -185,8 +186,8 @@ describe('Socket.io', () => {
           token: token2
         }
       })
-      user1.on('new-user-login', username => {
-        expect(username).to.equal('user2')
+      user1.on('new-user-login', users => {
+        expect(users).to.be.an('array').with.length(2)
         done()
       })
 
@@ -207,7 +208,9 @@ describe('Socket.io', () => {
             token: token2
           }
         })
-        done()
+        user2.on('connect', () => {
+          done()
+        })
       })
       user2.disconnect()
     })
