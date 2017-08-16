@@ -20,9 +20,8 @@ describe('mission-IM-possible API', () => {
   })
 
   after(done => {
-    server.close(() => {
-      done()
-    })
+    server.close()
+    done()
   })
 
   const port = process.env.PORT || 3000
@@ -129,33 +128,99 @@ describe('mission-IM-possible API', () => {
 
 describe('Socket.io', () => {
 
-  it('broadcasts a message to all users', done => {
-    let messages = 0
+  describe('chat-message', () => {
 
-    function checkMessages(user) {
-      user.on('chat-message', msg => {
-        expect(msg).to.equal('Hello World!')
-        user.disconnect()
-        messages++
-        if (messages === 2) {
-          done()
-        }
-      })
-    }
-    const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-      path: '/api/connect'
-    })
-    checkMessages(user1)
-    user1.on('connect', () => {
-      const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+    it('broadcasts a message to all users', done => {
+      let messages = 0
+
+      function checkMessages(user) {
+        user.on('chat-message', msg => {
+          expect(msg).to.equal('Hello World!')
+          user.disconnect()
+          messages++
+          if (messages === 2) {
+            done()
+          }
+        })
+      }
+      const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
         path: '/api/connect'
       })
-      checkMessages(user2)
-      user2.on('connect', () => {
-        user1.emit('chat-message', 'Hello World!')
+      checkMessages(user1)
+      user1.on('connect', () => {
+        const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+          path: '/api/connect'
+        })
+        checkMessages(user2)
+        user2.on('connect', () => {
+          user1.emit('chat-message', 'Hello World!')
+        })
       })
+      done()
     })
-    done()
+
   })
 
+  describe('new-user-login', () => {
+
+    it('broadcasts when a socket connects', done => {
+      let incrementer = 0
+
+      function checkUserList(user) {
+        user.on('new-user-login', username => {
+          expect(username).to.equal('user1')
+          user.disconnect()
+          incrementer++
+          if (incrementer === 2) {
+            done()
+          }
+        })
+      }
+      const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+        path: '/api/connect'
+      })
+      checkUserList(user1)
+      user1.on('connect', () => {
+        const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+          path: '/api/connect'
+        })
+        checkUserList(user2)
+        user2.on('connect', () => {
+          user1.emit('new-user-login', 'user1')
+        })
+      })
+      done()
+    })
+
+  })
+
+  describe('disconnect', () => {
+
+    it('broadcasts username of socket that disconnects', done => {
+      const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+        path: '/api/connect',
+        'query': {
+          username: 'user1'
+        }
+      })
+      user1.on('new-user-login', username => {
+        expect(username).to.equal('user2')
+        user1.disconnect()
+        done()
+      })
+      user1.on('connect', () => {
+        const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+          path: '/api/connect',
+          'query': {
+            username: 'user2'
+          }
+        })
+        user2.on('connect', () => {
+          user2.disconnect()
+        })
+      })
+      done()
+    })
+
+  })
 })
