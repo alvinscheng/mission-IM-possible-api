@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { describe, it, before, after } = require('mocha')
+const { describe, it, before, after, beforeEach, afterEach } = require('mocha')
 const { expect } = require('chai')
 const request = require('request')
 const knex = require('knex')({
@@ -8,25 +8,25 @@ const knex = require('knex')({
 })
 const io = require('socket.io-client')
 const server = require('../index.js')
+const jwt = require('jsonwebtoken')
+
+const port = process.env.PORT || 3000
+const url = 'http://localhost:' + port
+
+before(done => {
+  server.listen(port, () => {
+    console.log('Listening on ' + port)
+    done()
+  })
+})
+
+after(done => {
+  server.close(() => {
+    done()
+  })
+})
 
 describe('mission-IM-possible API', () => {
-
-  before(done => {
-    const port = process.env.PORT || 3000
-    server.listen(port, () => {
-      console.log('Listening on ' + port)
-      done()
-    })
-  })
-
-  after(done => {
-    server.close(() => {
-      done()
-    })
-  })
-
-  const port = process.env.PORT || 3000
-  const url = 'http://localhost:' + port
 
   describe('POST /register', () => {
 
@@ -129,33 +129,88 @@ describe('mission-IM-possible API', () => {
 
 describe('Socket.io', () => {
 
-  it('broadcasts a message to all users', done => {
-    let messages = 0
+  let user1, user2
+  const token1 = jwt.sign({ username: 'user1' }, process.env.JWT_SECRET)
+  const token2 = jwt.sign({ username: 'user2' }, process.env.JWT_SECRET)
 
-    function checkMessages(user) {
-      user.on('chat-message', msg => {
-        expect(msg).to.equal('Hello World!')
-        user.disconnect()
-        messages++
-        if (messages === 2) {
-          done()
+  beforeEach(done => {
+    user1 = io('http://localhost:' + port, {
+      path: '/api/connect',
+      'query': {
+        username: 'user1',
+        token: token1
+      }
+    })
+    user1.on('connect', () => {
+      user2 = io('http://localhost:' + port, {
+        path: '/api/connect',
+        'query': {
+          username: 'user2',
+          token: token2
         }
       })
-    }
-    const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-      path: '/api/connect'
-    })
-    checkMessages(user1)
-    user1.on('connect', () => {
-      const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-        path: '/api/connect'
-      })
-      checkMessages(user2)
       user2.on('connect', () => {
-        user1.emit('chat-message', 'Hello World!')
+        done()
       })
     })
-    done()
   })
 
+  afterEach(() => {
+    user1.disconnect()
+    user2.disconnect()
+  })
+
+  describe('chat-message', () => {
+
+    it('broadcasts a message to all users', done => {
+
+      user1.on('chat-message', msg => {
+        expect(msg).to.equal('Hello World!')
+        done()
+      })
+      user2.emit('chat-message', 'Hello World!')
+    })
+
+  })
+
+  describe('new-user-login', () => {
+
+    it('broadcasts when a socket connects', done => {
+
+      user2.disconnect()
+      user2 = io('http://localhost:' + port, {
+        path: '/api/connect',
+        'query': {
+          username: 'user2',
+          token: token2
+        }
+      })
+      user1.on('new-user-login', username => {
+        expect(username).to.equal('user2')
+        done()
+      })
+
+    })
+
+  })
+
+  describe('disconnect', () => {
+
+    it('broadcasts username of socket that disconnects', done => {
+
+      user1.on('user-disconnected', username => {
+        expect(username).to.equal('user2')
+        user2 = io('http://localhost:' + port, {
+          path: '/api/connect',
+          'query': {
+            username: 'user2',
+            token: token2
+          }
+        })
+        done()
+      })
+      user2.disconnect()
+    })
+
+  })
 })

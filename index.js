@@ -24,8 +24,12 @@ io.use(socketioJwt.authorize({
 }))
 
 io.on('connection', socket => {
+  io.emit('new-user-login', socket.handshake.query.username)
   socket.on('chat-message', msg => {
     io.emit('chat-message', msg)
+  })
+  socket.on('disconnect', () => {
+    io.emit('user-disconnected', socket.handshake.query.username)
   })
 })
 
