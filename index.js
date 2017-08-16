@@ -30,6 +30,9 @@ io.on('connection', socket => {
   socket.on('new-user-login', username => {
     io.emit('new-user-login', username)
   })
+  socket.on('disconnect', () => {
+    io.emit('user-disconnected', socket.handshake.query.username)
+  })
 })
 
 /**
