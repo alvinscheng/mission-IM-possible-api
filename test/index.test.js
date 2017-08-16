@@ -8,6 +8,7 @@ const knex = require('knex')({
 })
 const io = require('socket.io-client')
 const server = require('../index.js')
+const jwt = require('jsonwebtoken')
 
 const port = process.env.PORT || 3000
 const url = 'http://localhost:' + port
@@ -129,19 +130,23 @@ describe('mission-IM-possible API', () => {
 describe('Socket.io', () => {
 
   let user1, user2
+  const token1 = jwt.sign({ username: 'user1' }, process.env.JWT_SECRET)
+  const token2 = jwt.sign({ username: 'user2' }, process.env.JWT_SECRET)
 
   beforeEach(done => {
     user1 = io('http://localhost:' + port, {
       path: '/api/connect',
       'query': {
-        username: 'user1'
+        username: 'user1',
+        token: token1
       }
     })
     user1.on('connect', () => {
       user2 = io('http://localhost:' + port, {
         path: '/api/connect',
         'query': {
-          username: 'user2'
+          username: 'user2',
+          token: token2
         }
       })
       user2.on('connect', () => {
@@ -176,14 +181,13 @@ describe('Socket.io', () => {
       user2 = io('http://localhost:' + port, {
         path: '/api/connect',
         'query': {
-          username: 'user2'
+          username: 'user2',
+          token: token2
         }
       })
-      user2.on('connect', () => {
-        user1.on('new-user-login', username => {
-          expect(username).to.equal('user2')
-          done()
-        })
+      user1.on('new-user-login', username => {
+        expect(username).to.equal('user2')
+        done()
       })
 
     })
@@ -199,7 +203,8 @@ describe('Socket.io', () => {
         user2 = io('http://localhost:' + port, {
           path: '/api/connect',
           'query': {
-            username: 'user2'
+            username: 'user2',
+            token: token2
           }
         })
         done()
