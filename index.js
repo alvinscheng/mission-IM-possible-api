@@ -60,7 +60,7 @@ app.post('/register', (req, res) => {
   findUser(username)
     .then(data => {
       if (data.length) {
-        res.status(409).send('Username already exists.')
+        res.status(409).send({ error: 'Username already exists.' })
       }
       else {
         addUser(username, hash)
