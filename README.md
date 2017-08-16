@@ -7,13 +7,3 @@ API for the mission IMpossible desktop app.
 Documentation: https://stark-meadow-83882.herokuapp.com/
 
 Client: https://github.com/alvinscheng/mission-IM-possible-api
-
-### Technologies Used
-  * Node v8.1.3
-  * Express v4.x
-  * Socket.IO v2.0.3
-  * JSON Web Tokens
-  * Bcrypt v1.0.2
-  * PostgreSQL
-  * Mocha v3.5.0
-  * Chai v4.1.1
