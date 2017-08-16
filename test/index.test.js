@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { describe, it, before, after } = require('mocha')
+const { describe, it, before, after, beforeEach, afterEach } = require('mocha')
 const { expect } = require('chai')
 const request = require('request')
 const knex = require('knex')({
@@ -9,23 +9,23 @@ const knex = require('knex')({
 const io = require('socket.io-client')
 const server = require('../index.js')
 
-describe('mission-IM-possible API', () => {
+const port = process.env.PORT || 3000
+const url = 'http://localhost:' + port
 
-  before(done => {
-    const port = process.env.PORT || 3000
-    server.listen(port, () => {
-      console.log('Listening on ' + port)
-      done()
-    })
-  })
-
-  after(done => {
-    server.close()
+before(done => {
+  server.listen(port, () => {
+    console.log('Listening on ' + port)
     done()
   })
+})
 
-  const port = process.env.PORT || 3000
-  const url = 'http://localhost:' + port
+after(done => {
+  server.close(() => {
+    done()
+  })
+})
+
+describe('mission-IM-possible API', () => {
 
   describe('POST /register', () => {
 
@@ -128,35 +128,42 @@ describe('mission-IM-possible API', () => {
 
 describe('Socket.io', () => {
 
+  let user1, user2
+
+  beforeEach(done => {
+    user1 = io('http://localhost:' + port, {
+      path: '/api/connect',
+      'query': {
+        username: 'user1'
+      }
+    })
+    user1.on('connect', () => {
+      user2 = io('http://localhost:' + port, {
+        path: '/api/connect',
+        'query': {
+          username: 'user2'
+        }
+      })
+      user2.on('connect', () => {
+        done()
+      })
+    })
+  })
+
+  afterEach(() => {
+    user1.disconnect()
+    user2.disconnect()
+  })
+
   describe('chat-message', () => {
 
     it('broadcasts a message to all users', done => {
-      let messages = 0
 
-      function checkMessages(user) {
-        user.on('chat-message', msg => {
-          expect(msg).to.equal('Hello World!')
-          user.disconnect()
-          messages++
-          if (messages === 2) {
-            done()
-          }
-        })
-      }
-      const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-        path: '/api/connect'
+      user1.on('chat-message', msg => {
+        expect(msg).to.equal('Hello World!')
+        done()
       })
-      checkMessages(user1)
-      user1.on('connect', () => {
-        const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-          path: '/api/connect'
-        })
-        checkMessages(user2)
-        user2.on('connect', () => {
-          user1.emit('chat-message', 'Hello World!')
-        })
-      })
-      done()
+      user2.emit('chat-message', 'Hello World!')
     })
 
   })
@@ -164,32 +171,21 @@ describe('Socket.io', () => {
   describe('new-user-login', () => {
 
     it('broadcasts when a socket connects', done => {
-      let incrementer = 0
 
-      function checkUserList(user) {
-        user.on('new-user-login', username => {
-          expect(username).to.equal('user1')
-          user.disconnect()
-          incrementer++
-          if (incrementer === 2) {
-            done()
-          }
-        })
-      }
-      const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-        path: '/api/connect'
+      user2.disconnect()
+      user2 = io('http://localhost:' + port, {
+        path: '/api/connect',
+        'query': {
+          username: 'user2'
+        }
       })
-      checkUserList(user1)
-      user1.on('connect', () => {
-        const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-          path: '/api/connect'
-        })
-        checkUserList(user2)
-        user2.on('connect', () => {
-          user1.emit('new-user-login', 'user1')
+      user2.on('connect', () => {
+        user1.on('new-user-login', username => {
+          expect(username).to.equal('user2')
+          done()
         })
       })
-      done()
+
     })
 
   })
@@ -197,29 +193,18 @@ describe('Socket.io', () => {
   describe('disconnect', () => {
 
     it('broadcasts username of socket that disconnects', done => {
-      const user1 = io.connect('https://stark-meadow-83882.herokuapp.com', {
-        path: '/api/connect',
-        'query': {
-          username: 'user1'
-        }
-      })
-      user1.on('new-user-login', username => {
+
+      user1.on('user-disconnected', username => {
         expect(username).to.equal('user2')
-        user1.disconnect()
-        done()
-      })
-      user1.on('connect', () => {
-        const user2 = io.connect('https://stark-meadow-83882.herokuapp.com', {
+        user2 = io('http://localhost:' + port, {
           path: '/api/connect',
           'query': {
             username: 'user2'
           }
         })
-        user2.on('connect', () => {
-          user2.disconnect()
-        })
+        done()
       })
-      done()
+      user2.disconnect()
     })
 
   })
