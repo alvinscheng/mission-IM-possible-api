@@ -155,9 +155,10 @@ describe('Socket.io', () => {
     })
   })
 
-  afterEach(() => {
+  afterEach(done => {
     user1.disconnect()
     user2.disconnect()
+    done()
   })
 
   describe('chat-message', () => {
@@ -179,16 +180,17 @@ describe('Socket.io', () => {
 
       user2.disconnect()
 
+      user1.on('new-user-login', users => {
+        expect(users).to.be.an('array').with.length(2)
+        done()
+      })
+
       user2 = io('http://localhost:' + port, {
         path: '/api/connect',
         'query': {
           username: 'user2',
           token: token2
         }
-      })
-      user1.on('new-user-login', users => {
-        expect(users).to.be.an('array').with.length(2)
-        done()
       })
 
     })
