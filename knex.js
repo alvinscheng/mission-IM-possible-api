@@ -15,4 +15,10 @@ function addUser(username, password) {
     .returning('*')
 }
 
-module.exports = { findUser, addUser }
+function addMessage(username, message, time) {
+  return knex('messages')
+    .insert({ username, message, time })
+    .returning('*')
+}
+
+module.exports = { findUser, addUser, addMessage }

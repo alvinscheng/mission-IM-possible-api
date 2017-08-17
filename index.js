@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { findUser, addUser } = require('./knex.js')
+const { findUser, addUser, addMessage } = require('./knex.js')
 const socketioJwt = require('socketio-jwt')
 
 const app = express()
@@ -115,6 +115,15 @@ app.post('/authenticate', (req, res) => {
       const payload = { username }
       const token = jwt.sign(payload, process.env.JWT_SECRET)
       res.status(200).send({ username, token })
+    })
+})
+
+app.post('/messages', (req, res) => {
+  const { username, message } = req.body
+  const time = Date.now()
+  addMessage(username, message, time)
+    .then(() => {
+      res.status(201).send({ username, message, time })
     })
 })
 
