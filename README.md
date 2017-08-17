@@ -6,4 +6,4 @@ API for the mission IMpossible desktop app.
 
 Documentation: https://stark-meadow-83882.herokuapp.com/
 
-Client: https://github.com/alvinscheng/mission-IM-possible-api
+Client: https://github.com/alvinscheng/mission-IM-possible-client
