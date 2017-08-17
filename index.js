@@ -48,7 +48,14 @@ io.on('connection', socket => {
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 201 CREATED
  *  {
- *    "token": "YOUR_TOKEN"
+ *    "token": "YOUR_TOKEN",
+ *    "username": "user1"
+ *  }
+ *
+ * @apiErrorExample {json} Error-Response:
+ *  HTTP/1.1 409 Conflict
+ *  {
+ *    "error": "Username already exists."
  *  }
  *
  */
@@ -82,9 +89,6 @@ app.post('/register', (req, res) => {
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 201 CREATED
  *  {
-
-UPDATE THIS
-
  *    "token": "YOUR_TOKEN"
  *    "username": "user1"
  *  }
@@ -118,12 +122,25 @@ app.post('/authenticate', (req, res) => {
     })
 })
 
+/**
+ * @api {post} /messages Adds a message to the database.
+ * @apiName AddMessage
+ * @apiGroup Messages
+ *
+ * @apiExample {httpie} Example Usage:
+ *  http post http://localhost/messages username=user1 message='Hello World'
+ *
+ * @apiSuccessExample {json} Successful Response:
+ *  HTTP/1.1 201 CREATED
+ *  Created
+ *
+ */
 app.post('/messages', (req, res) => {
   const { username, message } = req.body
   const time = Date.now()
   addMessage(username, message, time)
     .then(() => {
-      res.status(201).send({ username, message, time })
+      res.sendStatus(201)
     })
 })
 
