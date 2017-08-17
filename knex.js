@@ -21,4 +21,8 @@ function addMessage(username, message, time) {
     .returning('*')
 }
 
-module.exports = { findUser, addUser, addMessage }
+function getMessages() {
+  return knex('messages').orderBy('id', 'desc')
+}
+
+module.exports = { findUser, addUser, addMessage, getMessages }

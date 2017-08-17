@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { findUser, addUser, addMessage } = require('./knex.js')
+const { findUser, addUser, addMessage, getMessages } = require('./knex.js')
 const socketioJwt = require('socketio-jwt')
 
 const app = express()
@@ -142,6 +142,10 @@ app.post('/messages', (req, res) => {
     .then(() => {
       res.sendStatus(201)
     })
+})
+
+app.get('/messages', (req, res) => {
+  getMessages().then(data => res.json(data))
 })
 
 const port = process.env.PORT || 3000
