@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { findUser, addUser, addMessage, getMessages } = require('./knex.js')
+const { findUser, addUser, addMessage, getMessages, getMessagesByRoom, getRoom, createRoom, createRoomUsers } = require('./knex.js')
 const socketioJwt = require('socketio-jwt')
 
 const app = express()
@@ -137,8 +137,12 @@ app.post('/authenticate', (req, res) => {
  */
 app.post('/messages', (req, res) => {
   const { username, message } = req.body
+  let roomId
+  if (req.body.roomId) {
+    roomId = req.body.roomId
+  }
   const time = Date.now()
-  addMessage(username, message, time)
+  addMessage(username, message, time, roomId)
     .then(() => {
       res.sendStatus(201)
     })
@@ -153,30 +157,51 @@ app.post('/messages', (req, res) => {
  *  http GET http://localhost/messages
  *
  * @apiSuccessExample {json} Successful Response:
- * [
- *  {
- *    "id": 3,
- *    "message": "Hello World",
- *    "time": "1502943707033",
- *    "username": "user3"
- *  },
- *  {
- *    "id": 2,
- *    "message": "Hello World",
- *    "time": "1502943700888",
- *    "username": "user2"
- *  },
- *  {
- *    "id": 1,
- *    "message": "Hello World",
- *    "time": "1502943171711",
- *    "username": "user1"
- *  }
- * ]
+ *  HTTP/1.1 201 CREATED
+ *  [
+ *   {
+ *     "id": 3,
+ *     "message": "Hello World",
+ *     "time": "1502943707033",
+ *     "username": "user3"
+ *   },
+ *   {
+ *     "id": 2,
+ *     "message": "Hello World",
+ *     "time": "1502943700888",
+ *     "username": "user2"
+ *   },
+ *   {
+ *     "id": 1,
+ *     "message": "Hello World",
+ *     "time": "1502943171711",
+ *     "username": "user1"
+ *   }
+ *  ]
  *
  */
 app.get('/messages', (req, res) => {
-  getMessages().then(data => res.json(data))
+  if (!req.query.usernames) {
+    getMessages().then(data => res.json(data))
+  }
+  else {
+    const users = req.query.usernames.split(' ')
+    getRoom(users[0], users[1])
+      .then(rooms => {
+        if (!rooms[0]) {
+          createRoom()
+            .then(data => {
+              createRoomUsers(users[0], users[1], data[0].id)
+                .then(() => res.status(201).send('New room created!'))
+            })
+        }
+        else {
+          getMessagesByRoom(rooms[0].room_id).then(data => {
+            res.json(data)
+          })
+        }
+      })
+  }
 })
 
 const port = process.env.PORT || 3000

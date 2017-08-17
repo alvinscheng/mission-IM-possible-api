@@ -7,4 +7,4 @@ create table rooms_users (
 ---
 
 -- down
-drop table rooms_users;
+drop table if exists rooms_users;

@@ -6,4 +6,4 @@ create table rooms (
 ---
 
 -- down
-drop table rooms;
+drop table if exists rooms;

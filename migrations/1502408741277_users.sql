@@ -8,4 +8,4 @@ create table users (
 ---
 
 -- down
-drop table users;
+drop table if exists users;

@@ -15,9 +15,9 @@ function addUser(username, password) {
     .returning('*')
 }
 
-function addMessage(username, message, time) {
+function addMessage(username, message, time, roomId) {
   return knex('messages')
-    .insert({ username, message, time })
+    .insert({ username, message, time, room_id: roomId })
     .returning('*')
 }
 
@@ -25,4 +25,33 @@ function getMessages() {
   return knex('messages').orderBy('id', 'desc')
 }
 
-module.exports = { findUser, addUser, addMessage, getMessages }
+function getMessagesByRoom(room) {
+  return knex('messages')
+    .where('room_id', room)
+    .orderBy('id', 'desc')
+}
+
+function getRoom(user1, user2) {
+  return knex('rooms_users')
+    .select('room_id')
+    .whereIn('username', [user1, user2])
+    .groupBy('room_id')
+    .havingRaw('count(room_id) = 2')
+}
+
+function createRoom() {
+  return knex('rooms')
+    .insert({})
+    .returning('*')
+}
+
+function createRoomUsers(user1, user2, roomId) {
+  return knex('rooms_users')
+    .insert([
+      { room_id: roomId, username: user1 },
+      { room_id: roomId, username: user2 }
+    ])
+    .returning('*')
+}
+
+module.exports = { findUser, addUser, addMessage, getMessages, getMessagesByRoom, getRoom, createRoom, createRoomUsers }

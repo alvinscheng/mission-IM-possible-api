@@ -9,4 +9,4 @@ create table messages (
 ---
 
 -- down
-drop table messages;
+drop table if exists messages;

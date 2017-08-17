@@ -5,4 +5,4 @@ ADD room_id integer;
 ---
 
 -- down
-drop table messages;
+drop table if exists messages;
