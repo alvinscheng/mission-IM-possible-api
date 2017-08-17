@@ -125,6 +125,60 @@ describe('mission-IM-possible API', () => {
     })
   })
 
+  describe('POST /messages', () => {
+
+    before(done => {
+      knex('messages')
+        .truncate()
+        .then(() => done())
+    })
+
+    after(done => {
+      knex('messages')
+        .truncate()
+        .then(() => done())
+    })
+
+    it('Adds a new message to the database', done => {
+      const json = { username: 'user1', message: 'Hello', time: '100' }
+      request.post(url + '/messages', { json }, (err, res, body) => {
+        expect(err).to.equal(null)
+        expect(res).to.have.property('statusCode', 201)
+        done()
+      })
+    })
+
+  })
+
+  describe('GET /messages', () => {
+    const message1 = { username: 'user1', message: 'Hello', time: '100' }
+    const message2 = { username: 'user2', message: 'world', time: '200' }
+
+    before(done => {
+      knex('messages')
+        .insert(message1)
+        .then(() => {
+          knex('messages').insert(message2).then(() => done())
+        })
+    })
+
+    after(done => {
+      knex('messages')
+        .truncate()
+        .then(() => done())
+    })
+
+    it('Gets all messages from the database', done => {
+      request.get(url + '/messages', (err, res, body) => {
+        expect(err).to.equal(null)
+        expect(res).to.have.property('statusCode', 200)
+        expect(body).to.be.a('string')
+        done()
+      })
+    })
+
+  })
+
 })
 
 describe('Socket.io', () => {
