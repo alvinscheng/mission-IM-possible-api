@@ -125,6 +125,60 @@ describe('mission-IM-possible API', () => {
     })
   })
 
+  describe('POST /messages', () => {
+
+    before(done => {
+      knex('messages')
+        .truncate()
+        .then(() => done())
+    })
+
+    after(done => {
+      knex('messages')
+        .truncate()
+        .then(() => done())
+    })
+
+    it('Adds a new message to the database', done => {
+      const json = { username: 'user1', message: 'Hello', time: '100' }
+      request.post(url + '/messages', { json }, (err, res, body) => {
+        expect(err).to.equal(null)
+        expect(res).to.have.property('statusCode', 201)
+        done()
+      })
+    })
+
+  })
+
+  describe('GET /messages', () => {
+    const message1 = { username: 'user1', message: 'Hello', time: '100' }
+    const message2 = { username: 'user2', message: 'world', time: '200' }
+
+    before(done => {
+      knex('messages')
+        .insert(message1)
+        .then(() => {
+          knex('messages').insert(message2).then(() => done())
+        })
+    })
+
+    after(done => {
+      knex('messages')
+        .truncate()
+        .then(() => done())
+    })
+
+    it('Gets all messages from the database', done => {
+      request.get(url + '/messages', (err, res, body) => {
+        expect(err).to.equal(null)
+        expect(res).to.have.property('statusCode', 200)
+        expect(body).to.be.a('string')
+        done()
+      })
+    })
+
+  })
+
 })
 
 describe('Socket.io', () => {
@@ -155,9 +209,10 @@ describe('Socket.io', () => {
     })
   })
 
-  afterEach(() => {
+  afterEach(done => {
     user1.disconnect()
     user2.disconnect()
+    done()
   })
 
   describe('chat-message', () => {
@@ -179,16 +234,17 @@ describe('Socket.io', () => {
 
       user2.disconnect()
 
+      user1.on('new-user-login', users => {
+        expect(users).to.be.an('array').with.length(2)
+        done()
+      })
+
       user2 = io('http://localhost:' + port, {
         path: '/api/connect',
         'query': {
           username: 'user2',
           token: token2
         }
-      })
-      user1.on('new-user-login', users => {
-        expect(users).to.be.an('array').with.length(2)
-        done()
       })
 
     })
