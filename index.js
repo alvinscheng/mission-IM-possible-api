@@ -144,6 +144,37 @@ app.post('/messages', (req, res) => {
     })
 })
 
+/**
+ * @api {get} /messages Gets all messages from the database.
+ * @apiName GetMessage
+ * @apiGroup Messages
+ *
+ * @apiExample {httpie} Example Usage:
+ *  http GET http://localhost/messages
+ *
+ * @apiSuccessExample {json} Successful Response:
+ * [
+ *  {
+ *    "id": 3,
+ *    "message": "Hello World",
+ *    "time": "1502943707033",
+ *    "username": "user3"
+ *  },
+ *  {
+ *    "id": 2,
+ *    "message": "Hello World",
+ *    "time": "1502943700888",
+ *    "username": "user2"
+ *  },
+ *  {
+ *    "id": 1,
+ *    "message": "Hello World",
+ *    "time": "1502943171711",
+ *    "username": "user1"
+ *  }
+ * ]
+ *
+ */
 app.get('/messages', (req, res) => {
   getMessages().then(data => res.json(data))
 })
