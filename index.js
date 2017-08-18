@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { findUser, addUser, addMessage, getMessages } = require('./knex.js')
+const { findUser, addUser, addMessage, getMessagesByRoom, getRoom, createRoom, createRoomUsers } = require('./knex.js')
 const socketioJwt = require('socketio-jwt')
 
 const app = express()
@@ -35,6 +35,7 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     io.emit('user-disconnected', socket.handshake.query.username)
   })
+
 })
 
 /**
@@ -128,7 +129,7 @@ app.post('/authenticate', (req, res) => {
  * @apiGroup Messages
  *
  * @apiExample {httpie} Example Usage:
- *  http post http://localhost/messages username=user1 message='Hello World'
+ *  http post http://localhost/messages username=user1 message='Hello World' roomId=1
  *
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 201 CREATED
@@ -136,47 +137,76 @@ app.post('/authenticate', (req, res) => {
  *
  */
 app.post('/messages', (req, res) => {
-  const { username, message } = req.body
+  const { username, message, roomId } = req.body
   const time = Date.now()
-  addMessage(username, message, time)
+  addMessage(username, message, time, roomId)
     .then(() => {
       res.sendStatus(201)
     })
 })
 
 /**
- * @api {get} /messages Gets all messages from the database.
- * @apiName GetMessage
+ * @api {get} /messages Gets messages from the database.
+ * @apiName GetMessages
  * @apiGroup Messages
  *
  * @apiExample {httpie} Example Usage:
- *  http GET http://localhost/messages
+ *  http GET http://localhost/messages usernames=='user1 user2'
  *
  * @apiSuccessExample {json} Successful Response:
- * [
+ *  HTTP/1.1 200 OK
  *  {
- *    "id": 3,
- *    "message": "Hello World",
- *    "time": "1502943707033",
- *    "username": "user3"
- *  },
- *  {
- *    "id": 2,
- *    "message": "Hello World",
- *    "time": "1502943700888",
- *    "username": "user2"
- *  },
- *  {
- *    "id": 1,
- *    "message": "Hello World",
- *    "time": "1502943171711",
- *    "username": "user1"
+ *   "messages": [
+ *    {
+ *      "id": 3,
+ *      "message": "Hello World",
+ *      "room_id": 2,
+ *      "time": "1502943707033",
+ *      "username": "user3"
+ *    },
+ *    {
+ *      "id": 2,
+ *      "message": "Hello World",
+ *      "room_id": 1,
+ *      "time": "1502943700888",
+ *      "username": "user2"
+ *    },
+ *    {
+ *      "id": 1,
+ *      "message": "Hello World",
+ *      "room_id": 1,
+ *      "time": "1502943171711",
+ *      "username": "user1"
+ *    }
+ *   ],
+ *   "room": 1
  *  }
- * ]
  *
  */
 app.get('/messages', (req, res) => {
-  getMessages().then(data => res.json(data))
+  if (req.query.room) {
+    getMessagesByRoom(req.query.room).then(data => {
+      res.json({ messages: data, room: req.query.room })
+    })
+  }
+  else {
+    const users = req.query.usernames.split(' ')
+    getRoom(users[0], users[1])
+      .then(rooms => {
+        if (!rooms[0]) {
+          createRoom()
+            .then(data => {
+              createRoomUsers(users[0], users[1], data[0].id)
+                .then(() => res.json({ messages: [], room: data[0].id }))
+            })
+        }
+        else {
+          getMessagesByRoom(rooms[0].room_id).then(data => {
+            res.json({ messages: data, room: rooms[0].room_id })
+          })
+        }
+      })
+  }
 })
 
 const port = process.env.PORT || 3000

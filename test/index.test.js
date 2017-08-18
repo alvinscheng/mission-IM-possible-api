@@ -140,7 +140,7 @@ describe('mission-IM-possible API', () => {
     })
 
     it('Adds a new message to the database', done => {
-      const json = { username: 'user1', message: 'Hello', time: '100' }
+      const json = { username: 'user1', message: 'Hello', time: '100', roomId: 1 }
       request.post(url + '/messages', { json }, (err, res, body) => {
         expect(err).to.equal(null)
         expect(res).to.have.property('statusCode', 201)
@@ -151,28 +151,54 @@ describe('mission-IM-possible API', () => {
   })
 
   describe('GET /messages', () => {
-    const message1 = { username: 'user1', message: 'Hello', time: '100' }
-    const message2 = { username: 'user2', message: 'world', time: '200' }
+    const message1 = { username: 'user1', message: 'Hello', time: '100', room_id: 1 }
+    const message2 = { username: 'user2', message: 'world', time: '200', room_id: 1 }
 
     before(done => {
-      knex('messages')
-        .insert(message1)
-        .then(() => {
-          knex('messages').insert(message2).then(() => done())
+      knex('messages').truncate().insert(message1).then(() => {
+        knex('messages').insert(message2).then(() => {
+          knex('rooms').truncate().then(() => {
+            knex('rooms_users').truncate().then(() => {
+              done()
+            })
+          })
         })
+      })
     })
 
     after(done => {
-      knex('messages')
-        .truncate()
-        .then(() => done())
+      knex('messages').truncate().then(() => {
+        knex('rooms').truncate().then(() => {
+          knex('rooms_users').truncate().then(() => {
+            done()
+          })
+        })
+      })
     })
 
-    it('Gets all messages from the database', done => {
-      request.get(url + '/messages', (err, res, body) => {
+    it('Gets messages from the database by room id', done => {
+      request.get(url + '/messages?room=1', (err, res, body) => {
         expect(err).to.equal(null)
         expect(res).to.have.property('statusCode', 200)
         expect(body).to.be.a('string')
+        done()
+      })
+    })
+
+    it('Creates a new room if one doesn\'t exist between the users', done => {
+      request.get(url + '/messages?usernames=user1+user3', (err, res, body) => {
+        expect(err).to.equal(null)
+        expect(res).to.have.property('statusCode', 200)
+        expect(body).to.be.a('string')
+        done()
+      })
+    })
+
+    it('Gets messages from the database by usernames', done => {
+      request.get(url + '/messages?usernames=user1+user3', (err, res, body) => {
+        expect(err).to.equal(null)
+        expect(res).to.have.property('statusCode', 200)
+        expect(body).to.be.an('string')
         done()
       })
     })
@@ -234,17 +260,20 @@ describe('Socket.io', () => {
 
       user2.disconnect()
 
-      user1.on('new-user-login', users => {
-        expect(users).to.be.an('array').with.length(2)
-        done()
-      })
+      user1.on('user-disconnected', () => {
+        user1.on('new-user-login', users => {
+          expect(users).to.be.an('array').with.length(2)
+          done()
+        })
 
-      user2 = io('http://localhost:' + port, {
-        path: '/api/connect',
-        'query': {
-          username: 'user2',
-          token: token2
-        }
+        user2 = io('http://localhost:' + port, {
+          path: '/api/connect',
+          'query': {
+            username: 'user2',
+            token: token2
+          }
+        })
+
       })
 
     })
