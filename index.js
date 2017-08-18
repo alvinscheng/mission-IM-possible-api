@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { findUser, addUser, addMessage, getMessages, getMessagesByRoom, getRoom, createRoom, createRoomUsers } = require('./knex.js')
+const { findUser, addUser, addMessage, getMessagesByRoom, getRoom, createRoom, createRoomUsers } = require('./knex.js')
 const socketioJwt = require('socketio-jwt')
 
 const app = express()
@@ -35,6 +35,7 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     io.emit('user-disconnected', socket.handshake.query.username)
   })
+
 })
 
 /**
@@ -136,11 +137,7 @@ app.post('/authenticate', (req, res) => {
  *
  */
 app.post('/messages', (req, res) => {
-  const { username, message } = req.body
-  let roomId
-  if (req.body.roomId) {
-    roomId = req.body.roomId
-  }
+  const { username, message, roomId } = req.body
   const time = Date.now()
   addMessage(username, message, time, roomId)
     .then(() => {
@@ -157,7 +154,7 @@ app.post('/messages', (req, res) => {
  *  http GET http://localhost/messages
  *
  * @apiSuccessExample {json} Successful Response:
- *  HTTP/1.1 201 CREATED
+ *  HTTP/1.1 200 OK
  *  [
  *   {
  *     "id": 3,
@@ -181,8 +178,10 @@ app.post('/messages', (req, res) => {
  *
  */
 app.get('/messages', (req, res) => {
-  if (!req.query.usernames) {
-    getMessages().then(data => res.json(data))
+  if (req.query.room) {
+    getMessagesByRoom(req.query.room).then(data => {
+      res.json({ messages: data, room: req.query.room })
+    })
   }
   else {
     const users = req.query.usernames.split(' ')
@@ -192,12 +191,12 @@ app.get('/messages', (req, res) => {
           createRoom()
             .then(data => {
               createRoomUsers(users[0], users[1], data[0].id)
-                .then(() => res.status(201).send('New room created!'))
+                .then(() => res.json({ messages: data, room: data[0].id }))
             })
         }
         else {
           getMessagesByRoom(rooms[0].room_id).then(data => {
-            res.json(data)
+            res.json({ messages: data, room: rooms[0].room_id })
           })
         }
       })

@@ -21,10 +21,6 @@ function addMessage(username, message, time, roomId) {
     .returning('*')
 }
 
-function getMessages() {
-  return knex('messages').orderBy('id', 'desc')
-}
-
 function getMessagesByRoom(room) {
   return knex('messages')
     .where('room_id', room)
@@ -54,4 +50,4 @@ function createRoomUsers(user1, user2, roomId) {
     .returning('*')
 }
 
-module.exports = { findUser, addUser, addMessage, getMessages, getMessagesByRoom, getRoom, createRoom, createRoomUsers }
+module.exports = { findUser, addUser, addMessage, getMessagesByRoom, getRoom, createRoom, createRoomUsers }
