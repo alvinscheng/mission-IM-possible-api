@@ -129,7 +129,7 @@ app.post('/authenticate', (req, res) => {
  * @apiGroup Messages
  *
  * @apiExample {httpie} Example Usage:
- *  http post http://localhost/messages username=user1 message='Hello World'
+ *  http post http://localhost/messages username=user1 message='Hello World' roomId=1
  *
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 201 CREATED
@@ -146,35 +146,41 @@ app.post('/messages', (req, res) => {
 })
 
 /**
- * @api {get} /messages Gets all messages from the database.
- * @apiName GetMessage
+ * @api {get} /messages Gets messages from the database.
+ * @apiName GetMessages
  * @apiGroup Messages
  *
  * @apiExample {httpie} Example Usage:
- *  http GET http://localhost/messages
+ *  http GET http://localhost/messages usernames=='user1 user2'
  *
  * @apiSuccessExample {json} Successful Response:
  *  HTTP/1.1 200 OK
- *  [
- *   {
- *     "id": 3,
- *     "message": "Hello World",
- *     "time": "1502943707033",
- *     "username": "user3"
- *   },
- *   {
- *     "id": 2,
- *     "message": "Hello World",
- *     "time": "1502943700888",
- *     "username": "user2"
- *   },
- *   {
- *     "id": 1,
- *     "message": "Hello World",
- *     "time": "1502943171711",
- *     "username": "user1"
- *   }
- *  ]
+ *  {
+ *   "messages": [
+ *    {
+ *      "id": 3,
+ *      "message": "Hello World",
+ *      "room_id": 2,
+ *      "time": "1502943707033",
+ *      "username": "user3"
+ *    },
+ *    {
+ *      "id": 2,
+ *      "message": "Hello World",
+ *      "room_id": 1,
+ *      "time": "1502943700888",
+ *      "username": "user2"
+ *    },
+ *    {
+ *      "id": 1,
+ *      "message": "Hello World",
+ *      "room_id": 1,
+ *      "time": "1502943171711",
+ *      "username": "user1"
+ *    }
+ *   ],
+ *   "room": 1
+ *  }
  *
  */
 app.get('/messages', (req, res) => {
@@ -191,7 +197,7 @@ app.get('/messages', (req, res) => {
           createRoom()
             .then(data => {
               createRoomUsers(users[0], users[1], data[0].id)
-                .then(() => res.json({ messages: data, room: data[0].id }))
+                .then(() => res.json({ messages: [], room: data[0].id }))
             })
         }
         else {
